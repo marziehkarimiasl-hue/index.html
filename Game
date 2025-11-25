@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بازی اعشار ششم</title>
+
+<style>
+    body {
+        font-family: sans-serif;
+        background: linear-gradient(#ffe2bc, #fff);
+        text-align: center;
+        margin: 0;
+    }
+
+    .screen {
+        display: none;
+        padding: 20px;
+    }
+
+    #startScreen, #gameScreen, #winScreen, #gameOverScreen {
+        height: 90vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    button {
+        font-size: 28px;
+        padding: 20px 40px;
+        margin: 20px;
+        background: #ff9800;
+        color: white;
+        border: none;
+        border-radius: 18px;
+        width: 70%;
+        max-width: 330px;
+        box-shadow: 0 6px 0 #c77700;
+    }
+
+    button:active {
+        transform: translateY(4px);
+        box-shadow: 0 2px 0 #c77700;
+    }
+
+    #question {
+        font-size: 34px;
+        font-weight: bold;
+        margin: 20px;
+        line-height: 1.7;
+    }
+
+    #answerInput {
+        font-size: 28px;
+        padding: 15px;
+        width: 80%;
+        text-align: center;
+        border-radius: 12px;
+        border: 2px solid #000;
+    }
+
+    #timer, #score {
+        font-size: 28px;
+        margin: 10px;
+    }
+
+    #hint {
+        font-size: 20px;
+        color: #444;
+        margin-top: 10px;
+    }
+
+</style>
+</head>
+<body>
+
+<!-- امضای مخفی -->
+<!-- mka -->
+
+<audio id="bgm" loop>
+<source src="https://files.catbox.moe/ujl6xj.mp3">
+</audio>
+
+<!-- صفحه شروع -->
+<div id="startScreen" class="screen" style="display:flex;">
+    <h1 style="font-size:40px;">🎮 بازی اعشار ششم</h1>
+    <p style="font-size:22px;">مقایسه • جمع • تفریق</p>
+    <button onclick="startGame()">شروع بازی</button>
+</div>
+
+<!-- صفحه بازی -->
+<div id="gameScreen" class="screen">
+    <div id="timer">⏳ زمان: 30</div>
+    <div id="score">⭐ امتیاز: 0</div>
+    <div id="level">مرحله: 1</div>
+
+    <div id="question">...</div>
+
+    <input id="answerInput" type="text" placeholder="جواب را بنویس">
+
+    <p id="hint">مثال مقایسه: بزرگتر → > ، کوچکتر → <</p>
+
+    <button onclick="submitAnswer()">ثبت جواب</button>
+</div>
+
+<!-- پیروزی -->
+<div id="winScreen" class="screen">
+    <h1 style="font-size:42px;">🏆 آفرین! مرحله رو بردی</h1>
+    <button onclick="nextLevel()">مرحله بعد</button>
+</div>
+
+<!-- گیم‌اور -->
+<div id="gameOverScreen" class="screen">
+    <h1 style="font-size:42px; color:#e60000;">💥 Game Over</h1>
+    <button onclick="restartGame()">شروع دوباره</button>
+</div>
+
+<script>
+
+let level = 1;
+let score = 0;
+let timeLeft = 30;
+let timerInterval;
+let correctAnswer = "";
+
+function $(id){ return document.getElementById(id); }
+
+function show(screen){
+    document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
+    $(screen).style.display = "flex";
+}
+
+function startGame(){
+    $("bgm").play();
+    score = 0;
+    level = 1;
+    startLevel();
+}
+
+function startLevel(){
+    show("gameScreen");
+    $("score").innerText = "⭐ امتیاز: " + score;
+    $("level").innerText = "مرحله: " + level;
+
+    timeLeft = 30;
+    $("timer").innerText = "⏳ زمان: " + timeLeft;
+
+    clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{
+        timeLeft--;
+        $("timer").innerText = "⏳ زمان: " + timeLeft;
+        if(timeLeft <= 0){
+            clearInterval(timerInterval);
+            show("gameOverScreen");
+        }
+    },1000);
+
+    generateQuestion();
+}
+
+// تبدیل اعشار از 2/5 به 0.5
+function slashToDecimal(str){
+    return Number(str.replace("/", "."));
+}
+
+function generateQuestion(){
+    let type = Math.ceil(Math.random() * 3);
+
+    if(type === 1){
+        generateComparison();
+    }
+    else if(type === 2){
+        generateAddition();
+    }
+    else {
+        generateSubtraction();
+    }
+}
+
+
+// ----------------------
+// مقایسه اعداد اعشاری
+// ----------------------
+function generateComparison(){
+    let a = (Math.floor(Math.random()*90)+10)/10;
+    let b = (Math.floor(Math.random()*90)+10)/10;
+
+    let showA = String(a).replace(".", "/");
+    let showB = String(b).replace(".", "/");
+
+    $("question").innerText = `کدام درست است؟  
+    ${showA}  ?  ${showB}`;
+
+    correctAnswer = a > b ? ">" : "<";
+}
+
+
+// ----------------------
+// جمع اعشاری
+// ----------------------
+function generateAddition(){
+    let a = (Math.floor(Math.random()*50)+10)/10;
+    let b = (Math.floor(Math.random()*50)+10)/10;
+
+    let showA = String(a).replace(".", "/");
+    let showB = String(b).replace(".", "/");
+
+    $("question").innerText = `${showA} + ${showB}`;
+
+    correctAnswer = (a + b).toFixed(1).replace(".", "/");
+}
+
+
+// ----------------------
+// تفریق بدون جواب منفی
+// ----------------------
+function generateSubtraction(){
+    let x = (Math.floor(Math.random()*50)+10)/10;
+    let y = (Math.floor(Math.random()*50)+10)/10;
+
+    let a = Math.max(x,y);
+    let b = Math.min(x,y);
+
+    let showA = String(a).replace(".", "/");
+    let showB = String(b).replace(".", "/");
+
+    $("question").innerText = `${showA} - ${showB}`;
+
+    correctAnswer = (a - b).toFixed(1).replace(".", "/");
+}
+
+function submitAnswer(){
+    let user = $("answerInput").value.trim();
+
+    if(user === correctAnswer){
+        score += 10;
+        clearInterval(timerInterval);
+        show("winScreen");
+    } else {
+        clearInterval(timerInterval);
+        show("gameOverScreen");
+    }
+}
+
+function nextLevel(){
+    level++;
+    startLevel();
+}
+
+function restartGame(){
+    startGame();
+}
+
+</script>
+
+</body>
+</html>
